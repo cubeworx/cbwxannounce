@@ -1,3 +1,5 @@
+[![Docker Pulls](https://img.shields.io/docker/pulls/cubeworx/cbwxannounce.svg)](https://hub.docker.com/r/cubeworx/cbwxannounce)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/cubeworx/cbwxannounce/blob/master/LICENSE)
 CubeWorx Minecraft Server LAN Announcer
 ==============
 
@@ -11,4 +13,4 @@ docker run -d -it --network=host -p 19132:19132/udp -p 25565:25565 -v /var/run/d
 
 ## Thanks
 
-This application was origionally copied from [manymine](https://github.com/illiteratealliterator/manymine) but has since been updated to be compatible with both Bedrock Edition & Java Edition servers.
+This application was origionally copied from [manymine](https://github.com/illiteratealliterator/manymine) but is being updated to be compatible with both Bedrock Edition & Java Edition servers.
