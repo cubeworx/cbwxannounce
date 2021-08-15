@@ -6,8 +6,9 @@ const Observer = require('./source/observer');
 const Connector = require('./source/connector');
 
 // Configuration
-const CBWX_BEDROCK_PORT = parseInt(process.env.CBWX_BEDROCK_PORT || '19132');
-const CBWX_JAVA_PORT = parseInt(process.env.CBWX_JAVA_PORT || '25565');
+const CBWX_MCBE_LISTEN_PORT = parseInt(process.env.CBWX_MCBE_LISTEN_PORT || '19132');
+const CBWX_MCJE_BROADCAST_PORT = parseInt(process.env.CBWX_MCJE_BROADCAST_PORT || '4445');
+const CBWX_MCJE_LISTEN_PORT = parseInt(process.env.CBWX_MCJE_LISTEN_PORT || '25565');
 
 // Mapping from container id to connector instance
 const connectors = {};
@@ -17,36 +18,55 @@ const observer = new Observer();
 
 // Handle a server being added
 observer.on('serverAdded', server => {
-  console.log(`Server added: ${server.name} (${server.id})`);
+  console.log(`Server added: ${server.name} (${server.type}) (${server.shortid})`);
   if (server.ipAddress) {
-    let internalPort = CBWX_BEDROCK_PORT;
-    
-    // Has the server been configured to run on a non-default port
-    if (server.internalPort != null) {
-      console.log(`Server ${server.name} configured to use internal port ${server.internalPort}`);
-      internalPort = server.internalPort;
-    }
-
-    // Find the mapping for the internal server port
-    let portMapping = server.portMappings.find(portMapping => portMapping.privatePort === internalPort);
-
-    // Default to using the only port mapping there is
-    if (!portMapping && server.portMappings.length === 1) {
-      portMapping = server.portMappings[0];
-    }
-
-    if (portMapping) {
-      console.log(`Server ${server.name} is running on internal port ${portMapping.privatePort} and external port ${portMapping.publicPort}`);
-      const connector = new Connector(server.name, server.ipAddress, portMapping.privatePort, portMapping.publicPort);
-      connectors[server.id] = connector;
-      connector.on('changed', (oldState, newState) => {
-        console.log(`${connector.name} changed state from [${oldState}] to [${newState}]`)
-      });
-      connector.on('error', error => {
-        console.error(`${connector.name} ${error.message}`);
-      });
-    } else {
-      console.error(`Server ${server.name} has no mapping for internal port ${internalPort}`);
+    if (server.type == "mcbe") {
+      let internalMCBEPort = CBWX_MCBE_LISTEN_PORT;
+      
+      // Find the mapping for the internal server port
+      let portMapping = server.portMappings.find(portMapping => portMapping.privatePort === internalMCBEPort);
+  
+      // Default to using the only port mapping there is
+      if (!portMapping && server.portMappings.length === 1) {
+        portMapping = server.portMappings[0];
+      }
+  
+      if (portMapping) {
+        console.log(`Server ${server.name} (${server.type}) is running on internal port ${portMapping.privatePort}/udp and external port ${portMapping.publicPort}`);
+        const connector = new Connector(server.name, server.type, server.ipAddress, portMapping.privatePort, portMapping.publicPort);
+        connectors[server.id] = connector;
+        connector.on('changed', (oldState, newState) => {
+          console.log(`${connector.name} changed status from [${oldState}] to [${newState}]`);
+        });
+        connector.on('error', error => {
+          console.error(`${connector.name} ${error.message}`);
+        });
+      } else {
+        console.error(`Server ${server.name} has no mapping for internal port ${internalMCBEPort}`);
+      }
+    } else if (server.type == "mcje") {
+      let internalMCJEPort = CBWX_MCJE_LISTEN_PORT;
+      
+      // Find the mapping for the internal server port
+      let portMapping = server.portMappings.find(portMapping => portMapping.privatePort === internalMCJEPort);
+  
+      // Default to using the only port mapping there is
+      if (!portMapping && server.portMappings.length === 1) {
+        portMapping = server.portMappings[0];
+      }
+      if (portMapping) {
+        console.log(`Server ${server.name} is running on internal port ${portMapping.privatePort} and external port ${portMapping.publicPort}`);
+        const connector = new Connector(server.name, server.ipAddress, portMapping.privatePort, portMapping.publicPort);
+        connectors[server.id] = connector;
+        connector.on('changed', (oldState, newState) => {
+          console.log(`${connector.name} changed state from [${oldState}] to [${newState}]`);
+        });
+        connector.on('error', error => {
+          console.error(`${connector.name} ${error.message}`);
+        });
+      } else {
+        console.error(`Server ${server.name} has no mapping for internal port ${internalMCJEPort}`);
+      }
     }
   } else {
     console.error(`Server ${server.name} has no ip address`);
@@ -55,7 +75,7 @@ observer.on('serverAdded', server => {
 
 // Handle a server being removed
 observer.on('serverRemoved', server => {
-  console.log(`Server removed: ${server.name} (${server.id})`);
+  console.log(`Server removed: ${server.name} (${server.type}) (${server.shortid})`);
   const connector = connectors[server.id];
   if (connector) {
     connector.close();
@@ -63,7 +83,7 @@ observer.on('serverRemoved', server => {
   }
 });
 
-// Respond to a ping from a minecraft client
+// Respond to a ping from a Bedrock Minecraft client
 function handleClientPing (socket, host, port, data) {
   const parser = createDeserializer(true);
   const serializer = createSerializer(true);
@@ -97,16 +117,22 @@ function handleClientPing (socket, host, port, data) {
 }
 
 // Check configuration
-if (CBWX_BEDROCK_PORT) {
-  console.log(`CBWX_BEDROCK_PORT=${CBWX_BEDROCK_PORT}`);
+if (CBWX_MCBE_LISTEN_PORT) {
+  console.log(`CBWX_MCBE_LISTEN_PORT=${CBWX_MCBE_LISTEN_PORT}`);
 } else {
-  console.error("ERROR: No listen port specified, CBWX_BEDROCK_PORT cannot be empty");
+  console.error("ERROR: No listen port specified, CBWX_MCBE_LISTEN_PORT cannot be empty");
   process.exit(1);
 }
-if (CBWX_JAVA_PORT) {
-  console.log(`CBWX_JAVA_PORT=${CBWX_JAVA_PORT}`);
+if (CBWX_MCJE_BROADCAST_PORT) {
+  console.log(`CBWX_MCJE_BROADCAST_PORT=${CBWX_MCJE_BROADCAST_PORT}`);
 } else {
-  console.error("ERROR: No listen port specified, CBWX_JAVA_PORT cannot be empty");
+  console.error("ERROR: No listen port specified, CBWX_MCJE_BROADCAST_PORT cannot be empty");
+  process.exit(1);
+}
+if (CBWX_MCJE_LISTEN_PORT) {
+  console.log(`CBWX_MCJE_LISTEN_PORT=${CBWX_MCJE_LISTEN_PORT}`);
+} else {
+  console.error("ERROR: No listen port specified, CBWX_MCJE_LISTEN_PORT cannot be empty");
   process.exit(1);
 }
 
@@ -124,7 +150,7 @@ socket.on('message', (data, { port, address }) => {
 
 // Let's go
 observer.start();
-socket.bind(CBWX_BEDROCK_PORT);
+socket.bind(CBWX_MCBE_LISTEN_PORT);
 
 // Listen for termination message
 process.on('SIGTERM', function onSigterm () {

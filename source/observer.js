@@ -73,19 +73,21 @@ Observer.Server = class {
   constructor (info) {
     const self = this;
     self.id = info.Id;
+    self.shortid = self.id.substring(0, 12);
     self.name = info.Name || 'Unknown';
     self.ipAddress = null;
-    self.internalPort = null;
+    self.type = null;
     self.portMappings = [];
 
-    const configuredInternalPort = info.Config.Labels['cbwx.announce.internal-port'];
-    if (configuredInternalPort) {
-      self.internalPort = parseInt(configuredInternalPort);
+    const configuredtype = info.Config.Labels['cbwx.announce.type'];
+    if (configuredtype) {
+      self.type = configuredtype;
     }
 
     for (const [key, entries] of Object.entries(info.NetworkSettings.Ports)) {
       if (key && entries) {
-        const matches = key.match(/^(\d+)\/udp$/)
+        //console.log(key);
+        const matches = key.match(/^(\d+)/);
         if (matches) {
           const internalPort = parseInt(matches[1]);
           if (entries.length > 0 && entries[0].HostPort) {
@@ -106,9 +108,10 @@ Observer.Server = class {
   equalTo(other) {
     const self = this;
     return self.id === other.id
+      && self.shortid === other.shortid
       && self.name === other.name
       && self.ipAddress === other.ipAddress
-      && self.internalPort === other.internalPort
+      && self.type === other.type
       && self.portMappings.length === other.portMappings.length
       && self.portMappings.every((m, i) => m.equalTo(other.portMappings[i]));
   }

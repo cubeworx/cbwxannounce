@@ -9,13 +9,14 @@ function randomSigned32() {
 }
 
 class Connector extends EventEmitter {
-  constructor (name, host, privatePort, publicPort) {
+  constructor (name, type, ipAddress, privatePort, publicPort) {
     super();
     const self = this;
-    self.host = host;
+    self.type = type;
+    self.ipAddress = ipAddress;
     self.privatePort = privatePort;
     self.publicPort = publicPort;
-    self.name = `${name} (${self.host}:${self.publicPort})`;
+    self.name = `${name} (${self.type}) (${self.ipAddress}:${self.privatePort})`;
     self.clientID = [randomSigned32(), randomSigned32()];
     self.socket = dgram.createSocket({ type: 'udp4' });
     self.serializer = createSerializer(true);
@@ -28,7 +29,7 @@ class Connector extends EventEmitter {
     self.state = 'Initial';
 
     self.serializer.on('data', (chunk) => {
-      self.socket.send(chunk, 0, chunk.length, self.privatePort, self.host, (err) => {
+      self.socket.send(chunk, 0, chunk.length, self.privatePort, self.ipAddress, (err) => {
         if (err) {
           self.setState('Error');
           self.emit('error', err);
