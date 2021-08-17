@@ -18,4 +18,6 @@ RUN npm ci --only=production
 COPY /source/ /cbwxannounce/source/
 COPY index.js .
 
+EXPOSE 19132/udp
+
 CMD [ "node", "index.js" ]
