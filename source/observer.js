@@ -25,9 +25,11 @@ class Observer extends EventEmitter {
       return container.inspect();
     }));
 
+    //find containers running with announce label equal true
     const activeServers = containerData
       .filter(info => info.State.Status === 'running' && info.Config.Labels['cbwx.announce.enable'] === "true")
       .map(info => new Observer.Server(info));
+    //console.log(Object.entries(self.servers));
 
     for (const [id, server] of Object.entries(self.servers)) {
       if (!activeServers.find(s => s.id === id)) {
@@ -75,15 +77,28 @@ Observer.Server = class {
     self.id = info.Id;
     self.shortid = self.id.substring(0, 12);
     self.name = info.Name || 'Unknown';
+    self.announceName = null;
     self.ipAddress = null;
     self.type = null;
     self.portMappings = [];
 
+    //determine type from label
     const configuredtype = info.Config.Labels['cbwx.announce.type'];
     if (configuredtype) {
       self.type = configuredtype;
     }
 
+    //determine server name to announce
+    for (const [key, entries] of Object.entries(info.Config.Env)) {
+      if (key && entries) {
+        const matches = entries.includes('SERVER_NAME');
+        if (matches) {
+          self.announceName = entries.split('=')[1];
+        }
+      }
+    }      
+        
+    //determine exposed port
     for (const [key, entries] of Object.entries(info.NetworkSettings.Ports)) {
       if (key && entries) {
         //console.log(key);
@@ -97,6 +112,7 @@ Observer.Server = class {
       }
     }
 
+    //determine IPAddress
     for (const network of Object.values(info.NetworkSettings.Networks)) {
       if (network.IPAddress) {
         self.ipAddress = network.IPAddress;
@@ -110,6 +126,7 @@ Observer.Server = class {
     return self.id === other.id
       && self.shortid === other.shortid
       && self.name === other.name
+      && self.announceName === other.announceName
       && self.ipAddress === other.ipAddress
       && self.type === other.type
       && self.portMappings.length === other.portMappings.length

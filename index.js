@@ -12,7 +12,8 @@ const CBWX_ANNOUNCE_BROADCAST_PORT = parseInt(process.env.CBWX_ANNOUNCE_BROADCAS
 const CBWX_ANNOUNCE_LISTEN_PORT = parseInt(process.env.CBWX_ANNOUNCE_LISTEN_PORT || '19132');
 const CBWX_MCBE_CONNECT_PORT = parseInt(process.env.CBWX_MCBE_CONNECT_PORT || '19132');
 const CBWX_MCJE_CONNECT_PORT = parseInt(process.env.CBWX_MCJE_CONNECT_PORT || '25565');
-var Broadcaster;
+var broadcaster;
+var intervals = [];
 
 // Mapping from container id to connector instance
 const connectors = {};
@@ -22,7 +23,7 @@ const observer = new Observer();
 
 // Handle a server being added
 observer.on('serverAdded', server => {
-  console.log(`Server added: ${server.name} (${server.type}) (${server.shortid})`);
+  console.log(`Server added: ${server.name} (${server.type}) (${server.shortid}) (${server.announceName})`);
   if (server.ipAddress) {
     if (server.type == "mcbe") {
       let internalMCBEPort = CBWX_MCBE_CONNECT_PORT;
@@ -36,7 +37,7 @@ observer.on('serverAdded', server => {
       }
   
       if (portMapping) {
-        console.log(`Server ${server.name} (${server.type}) is running on internal port ${portMapping.privatePort}/udp and external port ${portMapping.publicPort}/udp`);
+        console.log(`Server ${server.name} (${server.type}) (${server.announceName}) is running on internal port ${portMapping.privatePort}/udp and external port ${portMapping.publicPort}/udp`);
         const connector = new Connector(server.name, server.type, server.ipAddress, portMapping.privatePort, portMapping.publicPort);
         connectors[server.id] = connector;
         connector.on('changed', (oldState, newState) => {
@@ -59,15 +60,14 @@ observer.on('serverAdded', server => {
         portMapping = server.portMappings[0];
       }
       if (portMapping) {
-        console.log(`Server ${server.name} (${server.type}) is running on internal port ${portMapping.privatePort} and external port ${portMapping.publicPort}`);
+        console.log(`Server ${server.name} (${server.type}) (${server.announceName}) is running on internal port ${portMapping.privatePort} and external port ${portMapping.publicPort}`);
         const connector = new Connector(server.name, server.type, server.ipAddress, portMapping.privatePort, portMapping.publicPort);
         connectors[server.id] = connector;
-        // connector.on('changed', (oldState, newState) => {
-        //   console.log(`${connector.name} changed status from [${oldState}] to [${newState}]`);
-        // });
-        // connector.on('error', error => {
-        //   console.error(`${connector.name} ${error.message}`);
-        // });
+      
+		    // run broadcast method every CBWX_ANNOUNCE_BROADCAST_DELAY_MS
+		    console.log(`Broadcasting [MOTD]${server.announceName}[/MOTD][AD]${portMapping.publicPort}[/AD] to ${CBWX_ANNOUNCE_BROADCAST_IP}:${CBWX_ANNOUNCE_BROADCAST_PORT} every ${CBWX_ANNOUNCE_BROADCAST_DELAY_MS}ms`)
+        intervals[server.shortid] = setInterval(broadcast, CBWX_ANNOUNCE_BROADCAST_DELAY_MS,`${server.announceName}`,`${server.type}`,`${portMapping.publicPort}`);
+      
       } else {
         console.error(`Server ${server.name} has no mapping for internal port ${internalMCJEPort}`);
       }
@@ -80,6 +80,7 @@ observer.on('serverAdded', server => {
 // Handle a server being removed
 observer.on('serverRemoved', server => {
   console.log(`Server removed: ${server.name} (${server.type}) (${server.shortid})`);
+  clearInterval(intervals[server.shortid]);
   const connector = connectors[server.id];
   if (connector) {
     connector.close();
@@ -118,6 +119,28 @@ function handleClientPing (socket, host, port, data) {
   });
 
   parser.write(data);
+}
+
+//Broadcast mcje servers
+function broadcast(announceName, type, publicPort) {
+ 	let msg = Buffer.from(`[MOTD]${announceName}[/MOTD][AD]${publicPort}[/AD]`);
+ 	//console.log(`[MOTD]${announceName}[/MOTD][AD]${publicPort}[/AD]`);
+ 	//console.log(msg);
+	if (msg) {
+		if (broadcaster) {
+		  broadcaster.send(msg, 0, msg.length, CBWX_ANNOUNCE_BROADCAST_PORT, CBWX_ANNOUNCE_BROADCAST_IP);
+		} else {
+		  broadcaster = dgram.createSocket('udp4');
+		  broadcaster.bind(CBWX_ANNOUNCE_BROADCAST_PORT);
+		  broadcaster.on('listening', function () {
+			  broadcaster.setBroadcast(true);
+			  broadcaster.send(msg, 0, msg.length, CBWX_ANNOUNCE_BROADCAST_PORT, CBWX_ANNOUNCE_BROADCAST_IP);
+		  });
+      broadcaster.on('error', error => {
+        console.error("Cannot bind broadcaster");
+      });
+		}
+	}
 }
 
 // Check configuration
