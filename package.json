@@ -1,13 +1,19 @@
 {
   "name": "cbwxannounce",
   "version": "1.0.0",
-  "description": "A tool to aid in the LAN discovery of multiple Minecraft Bedrock servers on a single machine.",
+  "description": "A tool to aid in the LAN discovery of multiple Minecraft Bedrock or Java servers running on a single host.",
+  "author": "Cory Claflin",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cubeworx/cbwxannounce.git"
+  },
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "dockerode": "^3.2.1",
+    "dockerode": "^3.3.0",
     "raknet": "^1.8.0"
   }
 }

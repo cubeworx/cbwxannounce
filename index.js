@@ -23,7 +23,7 @@ const observer = new Observer();
 
 // Handle a server being added
 observer.on('serverAdded', server => {
-  console.log(`Server added: ${server.name} (${server.type}) (${server.shortid}) (${server.announceName})`);
+  console.log(`Server added - Container:(${server.name}) Type:(${server.type}) ID:(${server.shortid}) Name:(${server.announceName})`);
   if (server.ipAddress) {
     if (server.type == "mcbe") {
       let internalMCBEPort = CBWX_MCBE_CONNECT_PORT;
@@ -37,11 +37,11 @@ observer.on('serverAdded', server => {
       }
   
       if (portMapping) {
-        console.log(`Server ${server.name} (${server.type}) (${server.announceName}) is running on internal port ${portMapping.privatePort}/udp and external port ${portMapping.publicPort}/udp`);
+        console.log(`Server running - Container:(${server.name}) Type:(${server.type}) ID:(${server.shortid}) Name:(${server.announceName}) IP:(${server.ipAddress}) Internal port:(${portMapping.privatePort}/udp) External port:(${portMapping.publicPort}/udp)`);
         const connector = new Connector(server.name, server.type, server.ipAddress, portMapping.privatePort, portMapping.publicPort);
         connectors[server.id] = connector;
         connector.on('changed', (oldState, newState) => {
-          console.log(`${connector.name} changed status from [${oldState}] to [${newState}]`);
+          console.log(`Server status - Container:(${connector.name}) Type:(${server.type}) ID:(${server.shortid}) Name:(${server.announceName}) IP:(${server.ipAddress}) Internal Port:(${portMapping.privatePort}) Old:(${oldState}) New:(${newState})`);
         });
         connector.on('error', error => {
           console.error(`${connector.name} ${error.message}`);
@@ -60,12 +60,12 @@ observer.on('serverAdded', server => {
         portMapping = server.portMappings[0];
       }
       if (portMapping) {
-        console.log(`Server ${server.name} (${server.type}) (${server.announceName}) is running on internal port ${portMapping.privatePort} and external port ${portMapping.publicPort}`);
+        console.log(`Server running - Container:(${server.name}) Type:(${server.type}) ID:(${server.shortid}) Name:(${server.announceName}) IP:(${server.ipAddress}) Internal port:(${portMapping.privatePort}) External port:(${portMapping.publicPort})`);
         const connector = new Connector(server.name, server.type, server.ipAddress, portMapping.privatePort, portMapping.publicPort);
         connectors[server.id] = connector;
       
-		    // run broadcast method every CBWX_ANNOUNCE_BROADCAST_DELAY_MS
-		    console.log(`Broadcasting [MOTD]${server.announceName}[/MOTD][AD]${portMapping.publicPort}[/AD] to ${CBWX_ANNOUNCE_BROADCAST_IP}:${CBWX_ANNOUNCE_BROADCAST_PORT} every ${CBWX_ANNOUNCE_BROADCAST_DELAY_MS}ms`)
+		    // run broadcast function every CBWX_ANNOUNCE_BROADCAST_DELAY_MS
+		    console.log(`Server broadcasting - Container:(${server.name}) Type:(${server.type}) ID:(${server.shortid}) Message:([MOTD]${server.announceName}[/MOTD][AD]${portMapping.publicPort}[/AD])`)
         intervals[server.shortid] = setInterval(broadcast, CBWX_ANNOUNCE_BROADCAST_DELAY_MS,`${server.announceName}`,`${server.type}`,`${portMapping.publicPort}`);
       
       } else {
@@ -79,7 +79,7 @@ observer.on('serverAdded', server => {
 
 // Handle a server being removed
 observer.on('serverRemoved', server => {
-  console.log(`Server removed: ${server.name} (${server.type}) (${server.shortid})`);
+  console.log(`Server removed - Container:(${server.name}) Type:(${server.type}) ID:(${server.shortid}) Name:(${server.announceName})`);
   clearInterval(intervals[server.shortid]);
   const connector = connectors[server.id];
   if (connector) {
@@ -124,8 +124,6 @@ function handleClientPing (socket, host, port, data) {
 //Broadcast mcje servers
 function broadcast(announceName, type, publicPort) {
  	let msg = Buffer.from(`[MOTD]${announceName}[/MOTD][AD]${publicPort}[/AD]`);
- 	//console.log(`[MOTD]${announceName}[/MOTD][AD]${publicPort}[/AD]`);
- 	//console.log(msg);
 	if (msg) {
 		if (broadcaster) {
 		  broadcaster.send(msg, 0, msg.length, CBWX_ANNOUNCE_BROADCAST_PORT, CBWX_ANNOUNCE_BROADCAST_IP);

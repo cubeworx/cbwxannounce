@@ -16,7 +16,7 @@ class Connector extends EventEmitter {
     self.ipAddress = ipAddress;
     self.privatePort = privatePort;
     self.publicPort = publicPort;
-    self.name = `${name} (${self.type}) (${self.ipAddress}:${self.privatePort})`;
+    self.name = `${name}`;
     self.clientID = [randomSigned32(), randomSigned32()];
     self.socket = dgram.createSocket({ type: 'udp4' });
     self.serializer = createSerializer(true);
