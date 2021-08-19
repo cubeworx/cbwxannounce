@@ -9,7 +9,7 @@
 CubeWorx Minecraft Server LAN Announcer
 ==============
 
-This image is a self-contained Minecraft Server announcer to make it easier to run multiple minecraft servers on the same host and make them them disoverable as LAN games for respective Bedrock Edition & Java Edition clients. It is intended for use in the upcoming CubeWork ecosystem but is also being provided for use in the Minecraft community.
+This image is a self-contained Minecraft Server announcer to make it easier to run multiple minecraft servers on the same host and make them them disoverable as LAN games for respective Bedrock Edition & Java Edition clients. It is intended for use in the upcoming CubeWorx ecosystem but is also being provided for use in the Minecraft community.
 
 ## Quickstart
 
