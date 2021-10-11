@@ -52,7 +52,7 @@ services:
 
 ### Java Edition
 
-The container must be ran in host mode so that the container can broadcast on the network to port 4445.
+The container must be ran in host mode so that the container can broadcast on the local network to port 4445.
 
 Make sure the `SERVER_NAME` environment variable is present and add the following labels to each running container:
 
@@ -86,9 +86,9 @@ services:
 
 ![](docs/JavaLanAnnounce.png)
 
-## Notes
+## CubeWorx Minecraft Server Proxy
 
-- This image is currently not compatible with [cbwxproxy](https://github.com/cubeworx/cbwxproxy) but we hope to update them to be compatible soon.
+When used with [cbwxproxy](https://github.com/cubeworx/cbwxproxy), cbwxannounce can broadcast remote servers to make them discoverable on your local network. As long as they have a different name and external port, muliple proxy containers can be ran and they will appear on the local LAN. This image is currently only compatible with Java Edition proxied servers but we hope to get Bedrock Edition proxied servers working soon.
 
 ## Thanks
 

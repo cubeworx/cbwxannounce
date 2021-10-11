@@ -76,7 +76,7 @@ Observer.Server = class {
     const self = this;
     self.id = info.Id;
     self.shortid = self.id.substring(0, 12);
-    self.name = info.Name || 'Unknown';
+    self.name = info.Name.split('/')[1] || 'Unknown';
     self.announceName = null;
     self.ipAddress = null;
     self.type = null;
@@ -93,6 +93,11 @@ Observer.Server = class {
       if (key && entries) {
         const matches = entries.includes('SERVER_NAME');
         if (matches) {
+          self.announceName = entries.split('=')[1];
+        }
+        //proxy doesn't have SERVER_NAME variable
+        const proxyMatches = entries.includes('CBWXPROXY_JAVA_REMOTE_HOST');
+        if (proxyMatches) {
           self.announceName = entries.split('=')[1];
         }
       }
