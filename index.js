@@ -25,17 +25,17 @@ const observer = new Observer();
 observer.on('serverAdded', server => {
   console.log(`Server added - Container:(${server.name}) Type:(${server.type}) ID:(${server.shortid}) Name:(${server.announceName})`);
   if (server.ipAddress) {
-    if (server.type == "mcbe") {
+    if (server.type == "mcbe") { //Bedrock Edition
       let internalMCBEPort = CBWX_MCBE_CONNECT_PORT;
-      
+
       // Find the mapping for the internal server port
       let portMapping = server.portMappings.find(portMapping => portMapping.privatePort === internalMCBEPort);
-  
+
       // Default to using the only port mapping there is
       if (!portMapping && server.portMappings.length === 1) {
         portMapping = server.portMappings[0];
       }
-  
+
       if (portMapping) {
         console.log(`Server running - Container:(${server.name}) Type:(${server.type}) ID:(${server.shortid}) Name:(${server.announceName}) IP:(${server.ipAddress}) Internal port:(${portMapping.privatePort}/udp) External port:(${portMapping.publicPort}/udp)`);
         const connector = new Connector(server.name, server.type, server.ipAddress, portMapping.privatePort, portMapping.publicPort);
@@ -49,12 +49,12 @@ observer.on('serverAdded', server => {
       } else {
         console.error(`Server ${server.name} has no mapping for internal port ${internalMCBEPort}`);
       }
-    } else if (server.type == "mcje") {
+    } else if (server.type == "mcje") { //Java Edition
       let internalMCJEPort = CBWX_MCJE_CONNECT_PORT;
-      
+
       // Find the mapping for the internal server port
       let portMapping = server.portMappings.find(portMapping => portMapping.privatePort === internalMCJEPort);
-  
+
       // Default to using the only port mapping there is
       if (!portMapping && server.portMappings.length === 1) {
         portMapping = server.portMappings[0];
@@ -63,13 +63,35 @@ observer.on('serverAdded', server => {
         console.log(`Server running - Container:(${server.name}) Type:(${server.type}) ID:(${server.shortid}) Name:(${server.announceName}) IP:(${server.ipAddress}) Internal port:(${portMapping.privatePort}) External port:(${portMapping.publicPort})`);
         const connector = new Connector(server.name, server.type, server.ipAddress, portMapping.privatePort, portMapping.publicPort);
         connectors[server.id] = connector;
-      
-		    // run broadcast function every CBWX_ANNOUNCE_BROADCAST_DELAY_MS
-		    console.log(`Server broadcasting - Container:(${server.name}) Type:(${server.type}) ID:(${server.shortid}) Message:([MOTD]${server.announceName}[/MOTD][AD]${portMapping.publicPort}[/AD])`)
+
+        // run broadcast function every CBWX_ANNOUNCE_BROADCAST_DELAY_MS
+        console.log(`Server broadcasting - Container:(${server.name}) Type:(${server.type}) ID:(${server.shortid}) Message:([MOTD]${server.announceName}[/MOTD][AD]${portMapping.publicPort}[/AD])`)
         intervals[server.shortid] = setInterval(broadcast, CBWX_ANNOUNCE_BROADCAST_DELAY_MS,`${server.announceName}`,`${server.type}`,`${portMapping.publicPort}`);
-      
+
       } else {
         console.error(`Server ${server.name} has no mapping for internal port ${internalMCJEPort}`);
+      }
+    } else if (server.type == "proxy") { //CWBX Java Proxy
+      let internalProxyPort = CBWX_MCJE_CONNECT_PORT;
+
+      // Find the mapping for the internal server port
+      let portMapping = server.portMappings.find(portMapping => portMapping.privatePort === internalProxyPort);
+
+      // Default to using the only port mapping there is
+      if (!portMapping && server.portMappings.length === 1) {
+        portMapping = server.portMappings[0];
+      }
+      if (portMapping) {
+        console.log(`Server running - Container:(${server.name}) Type:(${server.type}) ID:(${server.shortid}) Name:(${server.announceName}) IP:(${server.ipAddress}) Internal port:(${portMapping.privatePort}) External port:(${portMapping.publicPort})`);
+        const connector = new Connector(server.name, server.type, server.ipAddress, portMapping.privatePort, portMapping.publicPort);
+        connectors[server.id] = connector;
+
+	      // run broadcast function every CBWX_ANNOUNCE_BROADCAST_DELAY_MS
+        console.log(`Server broadcasting - Container:(${server.name}) Type:(${server.type}) ID:(${server.shortid}) Message:([MOTD]${server.announceName}[/MOTD][AD]${portMapping.publicPort}[/AD])`)
+        intervals[server.shortid] = setInterval(broadcast, CBWX_ANNOUNCE_BROADCAST_DELAY_MS,`${server.announceName}`,`${server.type}`,`${portMapping.publicPort}`);
+
+      } else {
+        console.error(`Server ${server.name} has no mapping for internal port ${internalProxyPort}`);
       }
     }
   } else {

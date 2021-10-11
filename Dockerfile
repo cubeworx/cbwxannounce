@@ -1,4 +1,4 @@
-FROM node:14.17.5-alpine
+FROM node:16.10.0-alpine
 
 ARG BUILD_DATE
 
